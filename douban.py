@@ -13,6 +13,23 @@ import requests
 import os
 import time
 
+import sys
+
+# 代码出自 https://www.v2ex.com/t/388763
+# 似乎是 buffer 写满才输出一次
+class Logger(object):
+    def __init__(self, filename="Default.log"):
+        self.terminal = sys.stdout
+        self.log = open(filename, "a")
+    
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+    
+    def flush(self):
+        pass
+sys.stdout = Logger("20190519.txt")
+
 s = requests.Session()
 url = 'https://accounts.douban.com/j/mobile/login/basic'
 password = input('please input your password:')
