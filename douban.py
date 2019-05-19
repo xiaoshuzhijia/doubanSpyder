@@ -50,7 +50,7 @@ print("Going to profile page...")
 homepage = s.get(myPage)
 #print(homepage.text)
 
-with open('my_douban.txt', 'w') as f:
+with open('my_douban.txt', 'w', encoding="utf-8") as f:
     f.write(homepage.text) #把登陆主页后返回的数据保存到文件中
 
 def getPageContent(s, url, fileName):
@@ -58,6 +58,39 @@ def getPageContent(s, url, fileName):
     with open(fileName, 'w', encoding="utf-8") as f:
         f.write(page.text) #把登陆主页后返回的数据保存到文件中
 
+# 从某个ContactPage获取每个关注人的主页
+def getAllContactsFromContactPage(myContactUrl, s):
+    #myContactUrl = 'https://www.douban.com/people/haithink/contacts'
+    myContactPage = s.get(myContactUrl)
+    temp = myContactPage.text
+    bsObj = BeautifulSoup(temp, features="lxml")
+    bsObj.h1
+    div = bsObj.find('ul', {"class":"user-list"})
+    
+    lis = div.findAll("div", {"class":"info"})
+    res = []
+    # 获取到了 关注人的URL 
+    for li in lis:
+        print(li.a['href'])
+        res.append(li.a['href'])
+
+# 从主页URL 获取 关注人页面 URL
+def getContactPageUrl(homePageUrl):
+    if(homePageUrl.endwith("/")):
+        return homePageUrl + "contacts"
+    else:
+         return homePageUrl + "/contacts"
+
+# 从主页URL 获取共同爱好数量
+# homePage 是 s.get 得到的对象
+def getCommonFromHomePage(homePage):
+    pageStr = homePage.text
+    idx = pageStr.find('共同的喜好')
+    commonLikes = pageStr[idx:idx+10]    
+    idx1 = commonLikes.find('(')
+    idx2 = commonLikes.find(')')
+    return commonLikes[idx1+1:idx2]        
+    
 # 这个是获取自己关注的人        
 #contactListUrl = 'https://www.douban.com/people/haithink/contacts'    
 #getPageContent(s, contactListUrl, 'doubancontactList.txt')
@@ -81,18 +114,7 @@ def getPageContent(s, url, fileName):
 
 # 另一个函数， 获取 关注他的人 ，输入为某个页面的URL 或者 页面文本
 
-#myContactUrl = 'https://www.douban.com/people/haithink/contacts'
-#myContactPage = s.get(myContactUrl)
-#temp = myContactPage.text
-#bsObj = BeautifulSoup(temp, features="lxml")
-#bsObj.h1
-#div = bsObj.find('ul', {"class":"user-list"})
-
-#lis = div.findAll("div", {"class":"info"})
-# 获取到了 关注人的URL 
-# lis[0].a['href']
-#for li in lis:
-#    print(li.a['href'])        
+    
 
 #接下来是 处理 翻页
 # 每页20个， 第2页的URL为 https://www.douban.com/contacts/list?tag=0&start=20
@@ -101,6 +123,12 @@ def getPageContent(s, url, fileName):
 #除了从自己的 主页的关注人 开始爬取之外， 在登录之后 可以从 任何 大V的 主页开始爬取
 # 需要 考虑到 网络中断、登录退出 等各种意外导致 爬虫 终止的情况， 
 # 需要把 所有 爬取过的 主页都记录下来，这样就不用二次 爬取
+        
+# 可以暂时先不考虑 翻页，只处理第一页 ，也能完成 爬虫的功能
+
+# 那似乎所有功能都有了？
+# 从某个人的主页 获取共同爱好数量
+        
         
         
         
