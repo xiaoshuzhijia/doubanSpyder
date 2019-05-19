@@ -11,6 +11,7 @@ from urllib.request import urlopen
 
 import requests
 import os
+import time
 
 s = requests.Session()
 url = 'https://accounts.douban.com/j/mobile/login/basic'
@@ -42,29 +43,18 @@ else:
 print(r.text)
 print("Cookie is set to:")
 print(s.cookies.get_dict())
-#
-myPage = 'https://www.douban.com/people/haithink/'
 
-print("-----------")
-print("Going to profile page...")
-homepage = s.get(myPage)
-#print(homepage.text)
 
-with open('my_douban.txt', 'w', encoding="utf-8") as f:
-    f.write(homepage.text) #把登陆主页后返回的数据保存到文件中
 
 def getPageContent(s, url, fileName):
     page = s.get(url)
     with open(fileName, 'w', encoding="utf-8") as f:
         f.write(page.text) #把登陆主页后返回的数据保存到文件中
 
-# 从某个ContactPage获取每个关注人的主页
-def getAllContactsFromContactPage(myContactUrl, s):
-    #myContactUrl = 'https://www.douban.com/people/haithink/contacts'
-    myContactPage = s.get(myContactUrl)
-    temp = myContactPage.text
+def getAllContactsFromContactPage(contactPage):
+    temp = contactPage.text
     bsObj = BeautifulSoup(temp, features="lxml")
-    bsObj.h1
+    #bsObj.h1
     div = bsObj.find('ul', {"class":"user-list"})
     
     lis = div.findAll("div", {"class":"info"})
@@ -74,9 +64,36 @@ def getAllContactsFromContactPage(myContactUrl, s):
         print(li.a['href'])
         res.append(li.a['href'])
 
+    return res
+
+def getAllContactsFromContactPageV2(contactPage):
+    temp = contactPage.text
+    bsObj = BeautifulSoup(temp, features="lxml")
+
+    dds = bsObj.findAll('dd')
+    
+    res = []
+    # 获取到了 关注人的URL 
+    for li in dds:
+        print(li.a['href'])
+        res.append(li.a['href'])
+
+    return res
+        
+# 从某个ContactPage获取每个关注人的主页
+def getAllContactsFromContactPageUrl(contactUrl, s):
+    #myContactUrl = 'https://www.douban.com/people/haithink/contacts'
+    contactPage = s.get(contactUrl)
+    return getAllContactsFromContactPage(contactPage)
+
+def getAllContactsFromContactPageUrlV2(contactUrl, s):
+    #myContactUrl = 'https://www.douban.com/people/haithink/contacts'
+    contactPage = s.get(contactUrl)
+    return getAllContactsFromContactPageV2(contactPage)
+
 # 从主页URL 获取 关注人页面 URL
 def getContactPageUrl(homePageUrl):
-    if(homePageUrl.endwith("/")):
+    if(homePageUrl.endswith("/")):
         return homePageUrl + "contacts"
     else:
          return homePageUrl + "/contacts"
@@ -129,9 +146,45 @@ def getCommonFromHomePage(homePage):
 # 那似乎所有功能都有了？
 # 从某个人的主页 获取共同爱好数量
         
+# first, get all contacts from self home page
+# homepage   
+#
+myPageUrl = 'https://www.douban.com/people/haithink/'
+
+print("-----------")
+
+#print("Going to profile page...")
+#homepage = s.get(myPageUrl)
+#print(homepage.text)
+#with open('my_douban.txt', 'w', encoding="utf-8") as f:
+#    f.write(homepage.text) #把登陆主页后返回的数据保存到文件中
+    
+myContactUrl = getContactPageUrl(myPageUrl)
+myContacts = getAllContactsFromContactPageUrl(myContactUrl, s)
+
+def bigLoop(_myContacts, depth = 0):
+    if(_myContacts == None):
+        return ;
+    if(depth == 10):
+        return ;
+    for contact in  _myContacts:
+        print("curr person is ", contact)
         
+        # 先获取某个关注人的共同爱好信息
+        contactHomePage = s.get(contact)
+        commonLike = getCommonFromHomePage(contactHomePage)        
+        print("common like is ", commonLike)
         
+        # 获取 关注人的 关注人列表
+        contackUrl = getContactPageUrl(contact)
+        print("contackUrl: ", contackUrl)
+        contacts = getAllContactsFromContactPageUrlV2(contackUrl, s)
         
+        time.sleep(5)
+        bigLoop(contacts, depth+1)
+        
+bigLoop(myContacts, 0)
+
         
 
 
